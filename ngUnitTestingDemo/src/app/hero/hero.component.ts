@@ -8,7 +8,7 @@ import { Hero } from "../hero";
 })
 export class HeroComponent implements OnInit {
   ngOnInit(): void {
-    console.log("Inside ngOnInit of HeroComponent");
+    //console.log("Inside ngOnInit of HeroComponent");
   }
   @Input() hero: Hero;
   @Output() delete = new EventEmitter();
