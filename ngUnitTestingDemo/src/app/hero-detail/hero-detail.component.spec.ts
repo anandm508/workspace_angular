@@ -53,6 +53,7 @@ describe("HeroDetailComponent", () => {
         strength: 55,
       })
     );
+    fixture.componentInstance.useDeBounce = false;
   });
 
   it("should display the hero name in the h2 tag", fakeAsync(() => {
@@ -132,7 +133,6 @@ describe("HeroDetailComponent", () => {
    * fixture.whenStable returns a promise which executes after all the promises in the context of zone.js finishes
    */
   it("should update hero name using deBounce using async helper", async(() => {
-    fixture.componentInstance.useDeBounce = false;
     fixture.componentInstance.usePromise = true;
 
     fixture.detectChanges();

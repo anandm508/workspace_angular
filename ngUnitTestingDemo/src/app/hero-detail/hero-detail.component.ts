@@ -12,7 +12,7 @@ import { HeroService } from "../hero.service";
 })
 export class HeroDetailComponent implements OnInit {
   @Input() hero: Hero;
-  useDeBounce = false;
+  useDeBounce = true;
   usePromise = false;
 
   constructor(
@@ -35,10 +35,13 @@ export class HeroDetailComponent implements OnInit {
   }
 
   save(): void {
+    //Best to implement debounce using rxJS debounceTime operator, this debounce implemenation is not working well with angular
+    //for the case of save just disable the button, to prevent further clicks
     if (!this.usePromise) {
       deBounce(
         () => {
           this.heroService.updateHero(this.hero).subscribe(() => {
+            console.log(`Updated hero ${this.hero.name}`);
             this.goBack();
           });
         },
