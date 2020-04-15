@@ -3,10 +3,22 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { HeroesComponent } from "./heroes.component";
 import { HeroComponent } from "../hero/hero.component";
 import { Hero } from "../hero";
-import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { NO_ERRORS_SCHEMA, Directive, Input } from "@angular/core";
 import { of } from "rxjs";
 import { By } from "@angular/platform-browser";
 
+@Directive({
+  selector: "[routerLink]",
+  //host links click event of the parent tag with onClick event of the directive
+  host: { "(click)": "onClick()" },
+})
+export class RouterLinkDirectiveStub {
+  @Input("routerLink") linkParams: any;
+  navigatedTo: any = null;
+  onClick() {
+    this.navigatedTo = this.linkParams;
+  }
+}
 describe("HeroesComponent (Deep Tests)", () => {
   let fixture: ComponentFixture<HeroesComponent>;
   let mockHeroService;
@@ -24,9 +36,9 @@ describe("HeroesComponent (Deep Tests)", () => {
       "deleteHero",
     ]);
     TestBed.configureTestingModule({
-      declarations: [HeroesComponent, HeroComponent],
+      declarations: [HeroesComponent, HeroComponent, RouterLinkDirectiveStub],
       providers: [{ provide: HeroService, useValue: mockHeroService }],
-      schemas: [NO_ERRORS_SCHEMA],
+      // schemas: [NO_ERRORS_SCHEMA],
     });
     fixture = TestBed.createComponent(HeroesComponent);
   });
@@ -50,7 +62,9 @@ describe("HeroesComponent (Deep Tests)", () => {
 
   it(`should call heroService.deleteHero when the
     Hero Component's delete button is clicked`, () => {
-    spyOn(fixture.componentInstance, "delete");
+    mockHeroService.deleteHero.and.returnValue(of({}));
+
+    spyOn(fixture.componentInstance, "delete").and.callThrough();
     mockHeroService.getHeroes.and.returnValue(of(HEROES));
 
     //run ngOnit
@@ -113,5 +127,23 @@ describe("HeroesComponent (Deep Tests)", () => {
       By.directive(HeroComponent)
     )[3].componentInstance;
     expect(addedHeroComponent.hero.name).toEqual(name);
+  });
+
+  it("should have the correct route for the first hero", () => {
+    mockHeroService.getHeroes.and.returnValue(of(HEROES));
+    fixture.detectChanges();
+
+    const heroComponentDEs = fixture.debugElement.queryAll(
+      By.directive(HeroComponent)
+    );
+    //query wil give the debugElement of the anchor tag
+    //injector.get(RouterLinkDirectiveStub) will give the actual instance of RouterLinkDirectiveStub
+    let routerLink = heroComponentDEs[0]
+      .query(By.directive(RouterLinkDirectiveStub))
+      .injector.get(RouterLinkDirectiveStub);
+
+    heroComponentDEs[0].query(By.css("a")).triggerEventHandler("click", null);
+
+    expect(routerLink.navigatedTo).toBe("/detail/1");
   });
 });

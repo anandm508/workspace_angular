@@ -12,6 +12,8 @@ import { HeroService } from "../hero.service";
 })
 export class HeroDetailComponent implements OnInit {
   @Input() hero: Hero;
+  useDeBounce = false;
+  usePromise = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -20,7 +22,6 @@ export class HeroDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log("Inside ngOnInit of hero detail component");
     this.getHero();
   }
 
@@ -30,15 +31,43 @@ export class HeroDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    console.log("back called");
     this.location.back();
   }
 
   save(): void {
-    console.log("Save called");
-    this.heroService.updateHero(this.hero).subscribe(() => {
-      console.log("Saved hero");
-      this.goBack();
-    });
+    if (!this.usePromise) {
+      deBounce(
+        () => {
+          this.heroService.updateHero(this.hero).subscribe(() => {
+            this.goBack();
+          });
+        },
+        250,
+        !this.useDeBounce
+      )();
+    } else {
+      var p = new Promise((resolve) => {
+        this.heroService.updateHero(this.hero).subscribe(() => {
+          this.goBack();
+        });
+        resolve();
+      });
+    }
   }
+}
+
+function deBounce(func, wait, immediate) {
+  var timeout;
+  return function () {
+    var context = this,
+      args = arguments;
+    var later = function () {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+    var callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) func.apply(context, args);
+  };
 }

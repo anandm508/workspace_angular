@@ -5,9 +5,11 @@ import { HeroService } from "./../hero.service";
 import { HeroDetailComponent } from "./hero-detail.component";
 import {
   TestBed,
-  ComponentFixture,
   fakeAsync,
   flush,
+  ComponentFixture,
+  tick,
+  async,
 } from "@angular/core/testing";
 import { of } from "rxjs";
 import { By } from "@angular/platform-browser";
@@ -69,7 +71,8 @@ describe("HeroDetailComponent", () => {
   }));
 
   it("should update the hero name", () => {
-    spyOn(fixture.componentInstance, "save");
+    spyOn(fixture.componentInstance, "save").and.callThrough();
+    spyOn(fixture.componentInstance, "goBack").and.callThrough();
 
     fixture.detectChanges();
 
@@ -85,6 +88,59 @@ describe("HeroDetailComponent", () => {
     expect(fixture.componentInstance.hero.name).toEqual("Captain America");
     expect(fixture.componentInstance.save).toHaveBeenCalled();
     expect(mockHeroService.getHero).toHaveBeenCalled();
-    //expect(mockHeroService.updateHero).toHaveBeenCalled();
+    expect(mockHeroService.updateHero).toHaveBeenCalled();
+    expect(fixture.componentInstance.goBack).toHaveBeenCalled();
+    expect(mockLocation.back).toHaveBeenCalled();
   });
+
+  /**
+   * Using done async call back and setTimeout for testing async logic in save()
+   */
+  it("should update hero name using deBounce using done", (done) => {
+    fixture.componentInstance.useDeBounce = true;
+    fixture.detectChanges();
+
+    fixture.componentInstance.save();
+
+    setTimeout(() => {
+      expect(mockHeroService.updateHero).toHaveBeenCalled();
+      done();
+    }, 300);
+  });
+
+  /**
+   * Using fakeAsync helper for testing async logic in save()
+   * Can we be used to test setTimeout and Promises
+   * Preferred than async
+   */
+  it("should update hero name using deBounce using faleAsync helper", fakeAsync(() => {
+    fixture.componentInstance.useDeBounce = true;
+    fixture.detectChanges();
+
+    fixture.componentInstance.save();
+    //tick(250);
+    //alternate of tick, where clock in zone.js is
+    //forwarded untill all the async tasks have completed
+    flush();
+
+    expect(mockHeroService.updateHero).toHaveBeenCalled();
+  }));
+
+  /**
+   * Using async helper for testing promise logic in save()
+   * async works well with promises only
+   * fixture.whenStable returns a promise which executes after all the promises in the context of zone.js finishes
+   */
+  it("should update hero name using deBounce using async helper", async(() => {
+    fixture.componentInstance.useDeBounce = false;
+    fixture.componentInstance.usePromise = true;
+
+    fixture.detectChanges();
+
+    fixture.componentInstance.save();
+
+    fixture.whenStable().then(() => {
+      expect(mockHeroService.updateHero).toHaveBeenCalled();
+    });
+  }));
 });
